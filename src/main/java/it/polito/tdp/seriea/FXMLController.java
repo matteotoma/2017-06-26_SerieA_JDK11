@@ -3,7 +3,11 @@ package it.polito.tdp.seriea;
 import java.net.URL;
 import java.util.ResourceBundle;
 
+import it.polito.tdp.seriea.model.Adiacenza;
 import it.polito.tdp.seriea.model.Model;
+import it.polito.tdp.seriea.model.Season;
+import it.polito.tdp.seriea.model.SquadraTifo;
+import it.polito.tdp.seriea.model.Team;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -23,10 +27,10 @@ public class FXMLController {
     private URL location;
 
     @FXML
-    private ChoiceBox<?> boxSquadra;
+    private ChoiceBox<Team> boxSquadra;
 
     @FXML
-    private ChoiceBox<?> boxStagione;
+    private ChoiceBox<Season> boxStagione;
 
     @FXML
     private Button btnCalcolaConnessioniSquadra;
@@ -42,17 +46,37 @@ public class FXMLController {
 
     @FXML
     void doAnalizzaSquadre(ActionEvent event) {
-
+    	txtResult.clear();
+    	model.creaGrafo();
+    	txtResult.appendText(String.format("Grafo creato con %d vertici e %d archi!\n", model.Nvertici(), model.Narchi()));
+    	this.boxSquadra.getItems().addAll(model.getVertici());
+    	this.boxStagione.getItems().addAll(model.getSeasons());
     }
 
     @FXML
     void doCalcolaConnessioniSquadra(ActionEvent event) {
-
+    	txtResult.clear();
+    	Team t = this.boxSquadra.getValue();
+    	if(t == null) {
+    		txtResult.appendText("Devi selezionare una squadra!\n");
+    		return;
+    	}
+    	txtResult.appendText(String.format("La squadra %s ha giocato con: \n", t.getTeam()));
+    	for(Adiacenza a: model.getVicini(t))
+    		txtResult.appendText(String.format("%s %d\n", a.getT2(), a.getPeso()));
     }
 
     @FXML
     void doSimulaTifosi(ActionEvent event) {
-
+    	txtResult.clear();
+    	Season s = this.boxStagione.getValue();
+    	if(s == null) {
+    		txtResult.appendText("Devi selezionare una stagione!\n");
+    		return;
+    	}
+    	model.simula(s);
+    	for(SquadraTifo s1: model.getSquadre())
+    		txtResult.appendText(String.format("%s Punti: %d Tifosi: %d\n", s1.getTeam().getTeam(), s1.getPunti(), s1.getTifosi()));
     }
 
     @FXML
