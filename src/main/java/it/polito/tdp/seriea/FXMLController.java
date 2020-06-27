@@ -1,6 +1,7 @@
 package it.polito.tdp.seriea;
 
 import java.net.URL;
+import java.util.List;
 import java.util.ResourceBundle;
 
 import it.polito.tdp.seriea.model.Adiacenza;
@@ -48,7 +49,7 @@ public class FXMLController {
     void doAnalizzaSquadre(ActionEvent event) {
     	txtResult.clear();
     	model.creaGrafo();
-    	txtResult.appendText(String.format("Grafo creato con %d vertici e %d archi!\n", model.Nvertici(), model.Narchi()));
+    	txtResult.appendText(String.format("Grafo creato con %d vertici e %d archi!\n", model.nVertici(), model.nArchi()));
     	this.boxSquadra.getItems().addAll(model.getVertici());
     	this.boxStagione.getItems().addAll(model.getSeasons());
     }
@@ -63,7 +64,8 @@ public class FXMLController {
     	}
     	txtResult.appendText(String.format("La squadra %s ha giocato con: \n", t.getTeam()));
     	for(Adiacenza a: model.getVicini(t))
-    		txtResult.appendText(String.format("%s %d\n", a.getT2(), a.getPeso()));
+    		txtResult.appendText(String.format("%s %d \n", a.getT2(), a.getPeso()));
+    	
     }
 
     @FXML
@@ -74,9 +76,11 @@ public class FXMLController {
     		txtResult.appendText("Devi selezionare una stagione!\n");
     		return;
     	}
-    	model.simula(s);
-    	for(SquadraTifo s1: model.getSquadre())
-    		txtResult.appendText(String.format("%s Punti: %d Tifosi: %d\n", s1.getTeam().getTeam(), s1.getPunti(), s1.getTifosi()));
+    	model.simula(s.getSeason());
+    	List<SquadraTifo> result = model.getClassifica();
+    	for(SquadraTifo temp: result)
+    		txtResult.appendText(String.format("%s %d %d \n", temp.getTeam(), temp.getPunti(), temp.getTifosi()));
+    	
     }
 
     @FXML

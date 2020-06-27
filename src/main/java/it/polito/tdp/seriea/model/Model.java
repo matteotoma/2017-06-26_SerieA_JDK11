@@ -15,8 +15,8 @@ import it.polito.tdp.seriea.db.SerieADAO;
 
 public class Model {
 	
-	private Graph<Team, DefaultWeightedEdge> grafo;
 	private SerieADAO dao;
+	private Graph<Team, DefaultWeightedEdge> grafo;
 	private Map<String, Team> idMap;
 	private Simulator sim;
 	
@@ -28,53 +28,51 @@ public class Model {
 	public void creaGrafo() {
 		this.grafo = new SimpleWeightedGraph<>(DefaultWeightedEdge.class);
 		
-		// aggiungo i vertici
-		Graphs.addAllVertices(grafo, dao.listTeams(idMap));
-		
-		// aggiungo gli archi
+		dao.listTeams(idMap);
 		for(Adiacenza a: dao.getAdiacenze(idMap)) {
-			if(!grafo.containsEdge(grafo.getEdge(a.getT1(), a.getT2())))
+			if(!grafo.containsVertex(a.getT1()))
+				grafo.addVertex(a.getT1());
+			if(!grafo.containsVertex(a.getT2()))
+				grafo.addVertex(a.getT2());
+			if(grafo.getEdge(a.getT1(), a.getT2()) == null)
 				Graphs.addEdge(grafo, a.getT1(), a.getT2(), a.getPeso());
-			else {
-				int pesoNuovo = (int) grafo.getEdgeWeight(grafo.getEdge(a.getT1(), a.getT2())) + a.getPeso();
-				grafo.setEdgeWeight(grafo.getEdge(a.getT1(), a.getT2()), pesoNuovo);
-			}
 		}
 	}
 	
-	public List<Adiacenza> getVicini(Team t){
-		List<Adiacenza> list = new ArrayList<>();
-		for(Team vicino: Graphs.neighborListOf(grafo, t))
-			list.add(new Adiacenza(t, vicino, (int) grafo.getEdgeWeight(grafo.getEdge(t, vicino))));
-		Collections.sort(list);
-		return list;
+	public List<Adiacenza> getVicini(Team source){
+		List<Adiacenza> result = new ArrayList<>();
+		for(Team vicino: Graphs.neighborListOf(grafo, source))
+			result.add(new Adiacenza(source, vicino, (int) grafo.getEdgeWeight(grafo.getEdge(source, vicino))));
+		Collections.sort(result);
+		return result;
+	}
+	
+	public void simula(Integer s) {
+		this.sim = new Simulator();
+		sim.init(dao.getMatches(s, idMap), dao.getSquadre(s, idMap));
+		sim.run();
+	}
+	
+	public List<SquadraTifo> getClassifica(){
+		List<SquadraTifo> result = new ArrayList<>(sim.getSquadre().values());
+		return result;
 	}
 	
 	public List<Season> getSeasons(){
 		return dao.listSeasons();
 	}
 	
-	public int Narchi() {
+	public List<Team> getVertici(){
+		List<Team> result = new ArrayList<>(grafo.vertexSet());
+		return result;
+	}
+	
+	public int nVertici() {
+		return this.grafo.vertexSet().size();
+	}
+	
+	public int nArchi() {
 		return grafo.edgeSet().size();
-	}
-	
-	public int Nvertici() {
-		return grafo.vertexSet().size();
-	}
-
-	public List<Team> getVertici() {
-		List<Team> list = new ArrayList<>(grafo.vertexSet());
-		return list;
-	}
-
-	public void simula(Season s) {
-		this.sim = new Simulator();
-		sim.init(s.getSeason(), idMap);
-		sim.run();
-	}
-	
-	public List<SquadraTifo> getSquadre(){
-		return sim.getSquadre();
 	}
 
 }

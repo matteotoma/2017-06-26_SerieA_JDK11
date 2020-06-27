@@ -73,4 +73,9 @@ public class MatchStagione {
 		this.date = date;
 	}
 
+	@Override
+	public String toString() {
+		return "MatchStagione [tH=" + tH + ", tA=" + tA + ", gH=" + gH + ", gA=" + gA + ", date=" + date + "]";
+	}
+
 }

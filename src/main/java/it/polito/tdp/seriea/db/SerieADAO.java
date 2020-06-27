@@ -1,6 +1,7 @@
 package it.polito.tdp.seriea.db;
 
 import java.sql.Connection;
+
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -66,8 +67,9 @@ public class SerieADAO {
 	}
 	
 	public List<Adiacenza> getAdiacenze(Map<String, Team> idMap){
-		String sql = "SELECT m.HomeTeam AS t1, m.AwayTeam t2, COUNT(*) peso " + 
+		String sql = "SELECT m.HomeTeam AS h, m.AwayTeam a, COUNT(DISTINCT m.match_id) peso " + 
 				"FROM matches AS m " + 
+				"WHERE m.HomeTeam>m.AwayTeam " + 
 				"GROUP BY m.HomeTeam, m.AwayTeam ";
 		List<Adiacenza> result = new ArrayList<>();
 		Connection conn = DBConnect.getConnection();
@@ -77,12 +79,10 @@ public class SerieADAO {
 			ResultSet res = st.executeQuery();
 
 			while (res.next()) {
-				Team t1 = idMap.get(res.getString("t1"));
-				Team t2 = idMap.get(res.getString("t2"));
-				if(t1!=null && t2!=null) {
-					Adiacenza a = new Adiacenza(t1, t2, res.getInt("peso"));
-					result.add(a);
-				}
+				Team home = idMap.get(res.getString("h"));
+				Team away = idMap.get(res.getString("a"));
+				if(away!= null && home!=null)
+					result.add(new Adiacenza(home, away, res.getInt("peso")));
 			}
 
 			conn.close();
@@ -94,26 +94,24 @@ public class SerieADAO {
 		}
 	}
 	
-	public List<MatchStagione> getMatchStagione(Integer stagione, Map<String, Team> idMap){
-		String sql = "SELECT m.HomeTeam AS t1, m.AwayTeam t2, m.FTHG gH, m.FTAG gA, m.Date d " + 
+	public List<MatchStagione> getMatches(Integer s, Map<String, Team> idMap){
+		String sql = "SELECT m.HomeTeam AS h, m.AwayTeam a, m.FTHG gH, m.FTAG gA, m.Date d " + 
 				"FROM matches AS m " + 
-				"WHERE m.Season=? " + 
+				"WHERE m.Season=? " +
 				"ORDER BY m.Date ASC ";
 		List<MatchStagione> result = new ArrayList<>();
 		Connection conn = DBConnect.getConnection();
 
 		try {
 			PreparedStatement st = conn.prepareStatement(sql);
-			st.setInt(1, stagione);
+			st.setInt(1, s);
 			ResultSet res = st.executeQuery();
 
 			while (res.next()) {
-				Team t1 = idMap.get(res.getString("t1"));
-				Team t2 = idMap.get(res.getString("t2"));
-				if(t1!=null && t2!=null) {
-					MatchStagione a = new MatchStagione(t1, t2, res.getInt("gH"), res.getInt("gA"), res.getDate("d").toLocalDate());
-					result.add(a);
-				}
+				Team home = idMap.get(res.getString("h"));
+				Team away = idMap.get(res.getString("a"));
+				if(away!= null && home!=null)
+					result.add(new MatchStagione(home, away, res.getInt("gH"), res.getInt("gA"), res.getDate("d").toLocalDate()));
 			}
 
 			conn.close();
@@ -125,36 +123,23 @@ public class SerieADAO {
 		}
 	}
 	
-	public List<SquadraTifo> getSquadre(Integer stagione, Map<String, Team> idMap){
-		String sql = "SELECT m.HomeTeam AS t1, m.AwayTeam AS t2 " + 
+	public List<SquadraTifo> getSquadre(Integer s, Map<String, Team> idMap){
+		String sql = "SELECT DISTINCT m.HomeTeam AS h " + 
 				"FROM matches AS m " + 
-				"WHERE m.Season=? ";
+				"WHERE m.Season=? " + 
+				"ORDER BY m.HomeTeam ASC ";
 		List<SquadraTifo> result = new ArrayList<>();
-		List<Team> teams = new ArrayList<>();
 		Connection conn = DBConnect.getConnection();
 
 		try {
 			PreparedStatement st = conn.prepareStatement(sql);
-			st.setInt(1, stagione);
+			st.setInt(1, s);
 			ResultSet res = st.executeQuery();
 
 			while (res.next()) {
-				Team t1 = idMap.get(res.getString("t1"));
-				Team t2 = idMap.get(res.getString("t2"));
-				if(t1!=null && t2!=null) {
-					SquadraTifo s;
-					SquadraTifo s2;
-					if(!teams.contains(t1)) {
-						s = new SquadraTifo(t1, 1000, 0);
-						teams.add(t1);
-						result.add(s);						
-					}
-					if(!teams.contains(t2)) {
-						s2 = new SquadraTifo(t2, 1000, 0);
-						teams.add(t2);
-						result.add(s2);
-					}
-				}
+				Team home = idMap.get(res.getString("h"));
+				if(home!=null)
+					result.add(new SquadraTifo(home, 1000, 0));
 			}
 
 			conn.close();
